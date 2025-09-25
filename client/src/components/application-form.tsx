@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,9 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/components/auth-provider";
 import { apiRequest } from "@/lib/queryClient";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Shield, CheckCircle } from "lucide-react";
 import type { InsertApplication } from "@shared/schema";
 import { Link } from "wouter";
 
@@ -19,13 +21,49 @@ export default function ApplicationForm() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user, isAuthenticated } = useAuth();
+
+  // Redirect if not authenticated
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6">
+            <Link href="/">
+              <Button variant="outline" className="text-white border-white/20 hover:bg-white/10">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Home
+              </Button>
+            </Link>
+          </div>
+          <Card className="bg-white/5 backdrop-blur-sm border-white/10">
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <Shield className="text-6xl text-blue-400 mx-auto" />
+                <h2 className="text-2xl font-bold text-white">Authentication Required</h2>
+                <p className="text-blue-100">
+                  You must be logged in with Discord to submit a whitelist application.
+                </p>
+                <Button 
+                  onClick={() => window.location.href = '/auth/discord'}
+                  className="bg-[#5865F2] hover:bg-[#4752C4] text-white"
+                >
+                  Login with Discord
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   const form = useForm<InsertApplication>({
     resolver: zodResolver(insertApplicationSchema),
     defaultValues: {
-      userId: "",
-      username: "",
-      discordId: "",
+      userId: user?.id || "",
+      username: user?.username || "",
+      discordId: user?.id || "",
       steamId: "",
       aboutYourself: "",
       rpExperience: "",
@@ -39,6 +77,15 @@ export default function ApplicationForm() {
       cfxLinked: false,
     },
   });
+
+  // Auto-populate Discord information when user data is available
+  useEffect(() => {
+    if (user) {
+      form.setValue('userId', user.id);
+      form.setValue('username', user.displayName || user.username);
+      form.setValue('discordId', user.id);
+    }
+  }, [user, form]);
 
   const mutation = useMutation({
     mutationFn: async (data: InsertApplication) => {
@@ -67,27 +114,47 @@ export default function ApplicationForm() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 p-6">
         <div className="max-w-4xl mx-auto">
           <div className="mb-6">
             <Link href="/">
-              <Button variant="outline" data-testid="link-back-dashboard">
+              <Button variant="outline" className="text-white border-white/20 hover:bg-white/10" data-testid="link-back-dashboard">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
+                Back to Home
               </Button>
             </Link>
           </div>
-          <Card className="success-card bg-card shadow-lg border border-border">
+          <Card className="bg-white/5 backdrop-blur-sm border-white/10">
             <CardContent className="pt-6">
-              <div className="text-center space-y-4">
-                <div className="text-6xl">✅</div>
-                <h2 className="text-2xl font-bold text-green-600">Application Submitted!</h2>
-                <p className="text-muted-foreground">
-                  Thank you for your application! Our admin team will review it and get back to you soon.
-                </p>
-                <Button onClick={() => setIsSubmitted(false)} data-testid="button-submit-another">
-                  Submit Another Application
-                </Button>
+              <div className="text-center space-y-6">
+                <CheckCircle className="text-6xl text-green-400 mx-auto" />
+                <h2 className="text-3xl font-bold text-white">Application Submitted Successfully!</h2>
+                <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-6">
+                  <p className="text-green-100 text-lg mb-4">
+                    🎉 Thank you for applying to Prime City RP!
+                  </p>
+                  <div className="space-y-2 text-green-100">
+                    <p>✅ Your application has been submitted and is now under review</p>
+                    <p>✅ You'll receive a Discord notification once it's reviewed</p>
+                    <p>✅ Check our Discord server for updates and community news</p>
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button 
+                    onClick={() => window.open('https://discord.gg/primecityrp', '_blank')}
+                    className="bg-[#5865F2] hover:bg-[#4752C4] text-white"
+                  >
+                    Join Discord Server
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="text-white border-white/20 hover:bg-white/10"
+                    onClick={() => setIsSubmitted(false)} 
+                    data-testid="button-submit-another"
+                  >
+                    Submit Another Application
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -100,29 +167,53 @@ export default function ApplicationForm() {
   const rpWordsCount = form.watch("rpExperience").split(/\s+/).filter(word => word.length > 0).length;
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 p-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           <Link href="/">
-            <Button variant="outline" data-testid="link-back-dashboard">
+            <Button variant="outline" className="text-white border-white/20 hover:bg-white/10" data-testid="link-back-dashboard">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
+              Back to Home
             </Button>
           </Link>
         </div>
-        <Card className="bg-card shadow-lg border border-border">
+        
+        {/* User Info Display */}
+        <Card className="bg-white/5 backdrop-blur-sm border-white/10 mb-6">
+          <CardContent className="pt-6">
+            <div className="flex items-center space-x-4">
+              <img 
+                src={user?.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : '/default-avatar.png'} 
+                alt="Profile" 
+                className="w-12 h-12 rounded-full"
+              />
+              <div>
+                <h3 className="text-white font-semibold">Applying as: {user?.displayName || user?.username}</h3>
+                <p className="text-blue-200 text-sm">Discord ID: {user?.id}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-white/5 backdrop-blur-sm border-white/10">
       <CardHeader>
-        <CardTitle className="text-2xl text-center">📝 Prime City Whitelist Application</CardTitle>
-        <p className="text-center text-muted-foreground">
+        <CardTitle className="text-3xl text-center text-white">🎭 Prime City Whitelist Application</CardTitle>
+        <p className="text-center text-blue-100 text-lg">
           Welcome to Prime City Roleplay! Please fill out all required fields to apply for whitelist access.
         </p>
+        <Alert className="bg-blue-500/10 border-blue-500/20">
+          <Shield className="h-4 w-4 text-blue-400" />
+          <AlertDescription className="text-blue-100">
+            Your Discord information has been automatically filled. Please complete the remaining fields with accurate information.
+          </AlertDescription>
+        </Alert>
       </CardHeader>
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             {/* Personal Information */}
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold border-b border-border pb-2">📋 Personal Information</h3>
+              <h3 className="text-xl font-semibold border-b border-white/20 pb-2 text-white">📋 Personal Information</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
@@ -130,9 +221,15 @@ export default function ApplicationForm() {
                   name="userId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>User ID</FormLabel>
+                      <FormLabel className="text-white">User ID (Auto-filled)</FormLabel>
                       <FormControl>
-                        <Input placeholder="Your unique user ID" {...field} data-testid="input-user-id" />
+                        <Input 
+                          placeholder="Your unique user ID" 
+                          {...field} 
+                          disabled 
+                          className="bg-white/5 border-white/10 text-gray-400" 
+                          data-testid="input-user-id" 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -144,9 +241,15 @@ export default function ApplicationForm() {
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Username</FormLabel>
+                      <FormLabel className="text-white">Username (Auto-filled)</FormLabel>
                       <FormControl>
-                        <Input placeholder="Your username" {...field} data-testid="input-username" />
+                        <Input 
+                          placeholder="Your username" 
+                          {...field} 
+                          disabled 
+                          className="bg-white/5 border-white/10 text-gray-400" 
+                          data-testid="input-username" 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -159,16 +262,16 @@ export default function ApplicationForm() {
                 name="aboutYourself"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tell us about yourself (50 words minimum)</FormLabel>
+                    <FormLabel className="text-white">Tell us about yourself (50 words minimum)</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Share your interests, gaming background, and what draws you to roleplay..."
-                        className="min-h-[120px]"
+                        className="min-h-[120px] bg-white/5 border-white/10 text-white placeholder:text-gray-400"
                         {...field}
                         data-testid="textarea-about-yourself"
                       />
                     </FormControl>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-xs text-blue-200">
                       {aboutWordsCount}/50 words {aboutWordsCount < 50 ? "minimum" : "✓"}
                     </div>
                     <FormMessage />
@@ -181,16 +284,16 @@ export default function ApplicationForm() {
                 name="rpExperience"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>RP Experience & Motivation (50 words minimum)</FormLabel>
+                    <FormLabel className="text-white">RP Experience & Motivation (50 words minimum)</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Describe your roleplay experience and what inspired you to join FiveM RP..."
-                        className="min-h-[120px]"
+                        className="min-h-[120px] bg-white/5 border-white/10 text-white placeholder:text-gray-400"
                         {...field}
                         data-testid="textarea-rp-experience"
                       />
                     </FormControl>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-xs text-blue-200">
                       {rpWordsCount}/50 words {rpWordsCount < 50 ? "minimum" : "✓"}
                     </div>
                     <FormMessage />
@@ -204,9 +307,15 @@ export default function ApplicationForm() {
                   name="discordId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Discord ID</FormLabel>
+                      <FormLabel className="text-white">Discord ID (Auto-filled)</FormLabel>
                       <FormControl>
-                        <Input placeholder="781463891985669475" {...field} data-testid="input-discord-id" />
+                        <Input 
+                          placeholder="781463891985669475" 
+                          {...field} 
+                          disabled 
+                          className="bg-white/5 border-white/10 text-gray-400" 
+                          data-testid="input-discord-id" 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -218,9 +327,14 @@ export default function ApplicationForm() {
                   name="steamId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Steam Hex ID</FormLabel>
+                      <FormLabel className="text-white">Steam Hex ID</FormLabel>
                       <FormControl>
-                        <Input placeholder="110000146218998" {...field} data-testid="input-steam-id" />
+                        <Input 
+                          placeholder="110000146218998" 
+                          {...field} 
+                          className="bg-white/5 border-white/10 text-white placeholder:text-gray-400" 
+                          data-testid="input-steam-id" 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
