@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/components/auth-provider";
 import Landing from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
+import AdminPanel from "@/pages/admin";
 import Applications from "@/pages/applications";
 import NotFound from "@/pages/not-found";
 import ApplicationForm from "@/components/application-form";
@@ -15,6 +16,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Landing} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/admin" component={AdminPanel} />
       <Route path="/applications" component={Applications} />
       <Route path="/apply" component={ApplicationForm} />
       <Route component={NotFound} />

@@ -52,6 +52,14 @@ export default function Landing() {
                     <span className="text-white font-medium">{user?.displayName || user?.username}</span>
                     {user?.isAdmin && <Badge variant="destructive">Admin</Badge>}
                   </div>
+                  {user?.isAdmin && (
+                    <Link href="/admin">
+                      <Button className="bg-red-600 hover:bg-red-700 text-white">
+                        <Crown className="h-4 w-4 mr-2" />
+                        Admin Panel
+                      </Button>
+                    </Link>
+                  )}
                   <Link href="/dashboard">
                     <Button variant="outline" className="text-white border-white/20 hover:bg-white/10">
                       Dashboard
