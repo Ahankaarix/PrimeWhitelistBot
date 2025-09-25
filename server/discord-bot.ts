@@ -18,8 +18,6 @@ export async function startDiscordBot() {
   client = new Client({
     intents: [
       GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildMessages,
-      GatewayIntentBits.MessageContent,
     ],
   });
 
