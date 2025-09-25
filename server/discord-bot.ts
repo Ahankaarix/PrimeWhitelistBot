@@ -3,11 +3,70 @@ import { storage } from './storage';
 
 const DISCORD_TOKEN = process.env.DISCORD_BOT_TOKEN || process.env.DISCORD_TOKEN || '';
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID || '';
-const WHITELIST_CHANNEL_ID = process.env.WHITELIST_CHANNEL_ID || '';
-const ADMIN_CHANNEL_ID = process.env.ADMIN_CHANNEL_ID || '';
-const ADMIN_ROLE_ID = process.env.ADMIN_ROLE_ID || '';
+const GUILD_ID = process.env.DISCORD_GUILD_ID || '';
+const APPLICATION_CHANNEL_ID = process.env.DISCORD_APPLICATION_CHANNEL_ID || '';
+const LOG_CHANNEL_ID = process.env.DISCORD_LOG_CHANNEL_ID || '';
+const ADMIN_ROLE_ID = process.env.DISCORD_ADMIN_ROLE_ID || '';
+const WHITELIST_CHANNEL_ID = APPLICATION_CHANNEL_ID; // Backward compatibility
+const ADMIN_CHANNEL_ID = LOG_CHANNEL_ID; // Backward compatibility
 
 let client: Client;
+
+// Enhanced logging function for Discord channels
+export async function logToChannel(message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') {
+  if (!client || !LOG_CHANNEL_ID) return;
+  
+  try {
+    const channel = await client.channels.fetch(LOG_CHANNEL_ID);
+    if (!channel || channel.type !== ChannelType.GuildText) return;
+    
+    const colors = {
+      info: '#3498db',
+      success: '#2ecc71',
+      warning: '#f39c12',
+      error: '#e74c3c'
+    };
+    
+    const emojis = {
+      info: '📝',
+      success: '✅',
+      warning: '⚠️',
+      error: '❌'
+    };
+    
+    const embed = new EmbedBuilder()
+      .setColor(colors[type] as any)
+      .setDescription(`${emojis[type]} ${message}`)
+      .setTimestamp();
+    
+    await channel.send({ embeds: [embed] });
+  } catch (error) {
+    console.error('Error logging to Discord channel:', error);
+  }
+}
+
+// Get Discord user info
+export async function getDiscordUserInfo(userId: string) {
+  if (!client || !GUILD_ID) return null;
+  
+  try {
+    const guild = await client.guilds.fetch(GUILD_ID);
+    const member = await guild.members.fetch(userId);
+    
+    return {
+      id: member.user.id,
+      username: member.user.username,
+      displayName: member.displayName,
+      avatar: member.user.displayAvatarURL(),
+      joinedAt: member.joinedAt,
+      roles: member.roles.cache.map(role => role.name).filter(name => name !== '@everyone'),
+      isAdmin: member.roles.cache.has(ADMIN_ROLE_ID)
+    };
+  } catch (error) {
+    console.error('Error fetching Discord user info:', error);
+    return null;
+  }
+}
 
 export async function startDiscordBot() {
   if (!DISCORD_TOKEN) {
@@ -21,11 +80,14 @@ export async function startDiscordBot() {
     ],
   });
 
-  client.once('ready', async () => {
+  client.once('clientReady', async () => {
     console.log(`Discord bot logged in as ${client.user?.tag}`);
     
     // Register slash commands
     await registerSlashCommands();
+    
+    // Log bot startup
+    await logToChannel('🤖 Discord bot started and ready for applications!', 'info');
   });
 
   // Handle slash commands
@@ -41,6 +103,8 @@ export async function startDiscordBot() {
     } else if (interaction.isButton()) {
       if (interaction.customId.startsWith('approve_') || interaction.customId.startsWith('reject_')) {
         await handleAdminAction(interaction);
+      } else if (interaction.customId.startsWith('details_')) {
+        await handleDetailsView(interaction);
       }
     }
   });
@@ -170,11 +234,13 @@ async function handleApplicationSubmit(interaction: any) {
       ephemeral: true,
     });
 
-    // Send notification to admin channel
+    // Enhanced notifications with HTML-style formatting
     await sendAdminNotification(application);
-    
-    // Send copy to applications channel
     await sendApplicationLog(application);
+    await logToChannel(`New application submitted by ${application.username} (ID: ${application.id})`, 'info');
+    
+    // Send HTML-formatted email-style notification to user
+    await sendUserConfirmation(application, interaction.user);
 
   } catch (error) {
     console.error('Error creating application:', error);
@@ -367,5 +433,89 @@ async function sendRejectionMessage(application: any, admin: any) {
     if (adminChannel && adminChannel.type === ChannelType.GuildText) {
       await adminChannel.send(`❌ **${application.username}** rejected by **${admin.username}** at ${new Date().toLocaleString()}`);
     }
+  }
+}
+
+// Send HTML-formatted confirmation to user
+async function sendUserConfirmation(application: any, user: any) {
+  try {
+    // Send DM to user with HTML-style formatted message
+    const confirmationEmbed = new EmbedBuilder()
+      .setColor('#00d4aa')
+      .setTitle('🎭 Application Submitted Successfully!')
+      .setDescription(`
+        **Thank you for applying to Prime City RP!**
+        
+        Your whitelist application has been received and is now under review by our admin team.
+        
+        **Application Details:**
+        • **Application ID:** \`${application.id}\`
+        • **Character Name:** ${application.characterName}
+        • **Submitted:** ${new Date().toLocaleString()}
+        • **Status:** 🔄 Pending Review
+        
+        **What happens next?**
+        • Our admin team will review your application
+        • You'll receive a notification once reviewed
+        • Please be patient - reviews may take 24-48 hours
+        
+        **Need help?** Contact our support team in <#${APPLICATION_CHANNEL_ID}>
+      `)
+      .setThumbnail(user.displayAvatarURL())
+      .setFooter({ text: 'Prime City RP - Whitelist System' })
+      .setTimestamp();
+    
+    await user.send({ embeds: [confirmationEmbed] });
+  } catch (error) {
+    console.log('Could not send DM to user, they may have DMs disabled');
+  }
+}
+
+// Handle details view button
+async function handleDetailsView(interaction: any) {
+  const applicationId = interaction.customId.split('_')[1];
+  
+  try {
+    const application = await storage.getApplication(applicationId);
+    if (!application) {
+      return interaction.reply({
+        content: '❌ Application not found.',
+        ephemeral: true,
+      });
+    }
+
+    const detailEmbed = new EmbedBuilder()
+      .setColor('#6366f1')
+      .setTitle(`📋 Full Application Details - ${application.characterName}`)
+      .setDescription(`**Complete application information for ${application.username}**`)
+      .addFields(
+        { name: '👤 Applicant Info', value: `**Discord:** <@${application.userId}>\n**Username:** ${application.username}\n**Discord ID:** \`${application.discordId}\`\n**Steam ID:** \`${application.steamId}\``, inline: false },
+        { name: '🎭 Character Details', value: `**Name:** ${application.characterName}\n**Age:** ${application.characterAge}\n**Nationality:** ${application.characterNationality}`, inline: true },
+        { name: '📅 Application Info', value: `**ID:** \`${application.id}\`\n**Status:** ${application.status}\n**Submitted:** ${new Date(application.createdAt).toLocaleString()}`, inline: true },
+        { name: '📝 About Themselves', value: application.aboutYourself.length > 1024 ? application.aboutYourself.substring(0, 1021) + '...' : application.aboutYourself, inline: false },
+        { name: '🎮 RP Experience', value: application.rpExperience.length > 1024 ? application.rpExperience.substring(0, 1021) + '...' : application.rpExperience, inline: false },
+        { name: '📖 Character Backstory', value: application.characterBackstory.length > 1024 ? application.characterBackstory.substring(0, 1021) + '...' : application.characterBackstory, inline: false }
+      )
+      .setTimestamp();
+
+    if (application.contentCreation) {
+      detailEmbed.addFields({ name: '🎬 Content Creation', value: application.contentCreation, inline: false });
+    }
+    
+    if (application.previousServers) {
+      detailEmbed.addFields({ name: '🖥️ Previous Servers', value: application.previousServers, inline: false });
+    }
+
+    await interaction.reply({
+      embeds: [detailEmbed],
+      ephemeral: true,
+    });
+
+  } catch (error) {
+    console.error('Error viewing application details:', error);
+    await interaction.reply({
+      content: '❌ There was an error retrieving application details.',
+      ephemeral: true,
+    });
   }
 }
