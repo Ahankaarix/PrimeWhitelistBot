@@ -3,38 +3,38 @@
 @tailwind utilities;
 
 :root {
-  --background: hsl(54 57 63);
-  --foreground: hsl(255 255 255);
-  --card: hsl(47 49 54);
-  --card-foreground: hsl(255 255 255);
-  --popover: hsl(47 49 54);
-  --popover-foreground: hsl(255 255 255);
-  --primary: hsl(88 101 242);
-  --primary-foreground: hsl(255 255 255);
-  --secondary: hsl(79 84 92);
-  --secondary-foreground: hsl(255 255 255);
-  --muted: hsl(47 49 54);
-  --muted-foreground: hsl(114 118 125);
-  --accent: hsl(88 101 242);
-  --accent-foreground: hsl(255 255 255);
-  --destructive: hsl(237 66 69);
-  --destructive-foreground: hsl(255 255 255);
-  --border: hsl(79 84 92);
-  --input: hsl(64 68 75);
-  --ring: hsl(88 101 242);
-  --chart-1: hsl(88 101 242);
-  --chart-2: hsl(159 100 36);
-  --chart-3: hsl(42 92 56);
-  --chart-4: hsl(147 78 41);
-  --chart-5: hsl(341 75 50);
-  --sidebar: hsl(47 49 54);
-  --sidebar-foreground: hsl(255 255 255);
-  --sidebar-primary: hsl(88 101 242);
-  --sidebar-primary-foreground: hsl(255 255 255);
-  --sidebar-accent: hsl(88 101 242);
-  --sidebar-accent-foreground: hsl(255 255 255);
-  --sidebar-border: hsl(79 84 92);
-  --sidebar-ring: hsl(88 101 242);
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(0 0% 10%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(0 0% 10%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(0 0% 10%);
+  --primary: hsl(221 83% 53%);
+  --primary-foreground: hsl(0 0% 100%);
+  --secondary: hsl(210 40% 95%);
+  --secondary-foreground: hsl(0 0% 10%);
+  --muted: hsl(210 40% 98%);
+  --muted-foreground: hsl(215 16% 47%);
+  --accent: hsl(221 83% 53%);
+  --accent-foreground: hsl(0 0% 100%);
+  --destructive: hsl(0 84% 60%);
+  --destructive-foreground: hsl(0 0% 100%);
+  --border: hsl(214 32% 91%);
+  --input: hsl(214 32% 91%);
+  --ring: hsl(221 83% 53%);
+  --chart-1: hsl(221 83% 53%);
+  --chart-2: hsl(159 100% 36%);
+  --chart-3: hsl(42 92% 56%);
+  --chart-4: hsl(147 78% 41%);
+  --chart-5: hsl(341 75% 50%);
+  --sidebar: hsl(0 0% 100%);
+  --sidebar-foreground: hsl(0 0% 10%);
+  --sidebar-primary: hsl(221 83% 53%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(221 83% 53%);
+  --sidebar-accent-foreground: hsl(0 0% 100%);
+  --sidebar-border: hsl(214 32% 91%);
+  --sidebar-ring: hsl(221 83% 53%);
   --font-sans: "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
@@ -51,10 +51,10 @@
   --spacing: 0.25rem;
   
   /* Discord-specific colors */
-  --discord-success: hsl(59 100% 70%);
-  --discord-success-foreground: hsl(0 0% 0%);
-  --discord-error: hsl(237 66 69);
-  --discord-button: hsl(88 101 242);
+  --discord-success: hsl(139 47% 47%);
+  --discord-success-foreground: hsl(0 0% 100%);
+  --discord-error: hsl(0 84% 60%);
+  --discord-button: hsl(221 83% 53%);
 }
 
 .dark {

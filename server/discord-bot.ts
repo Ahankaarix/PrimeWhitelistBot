@@ -49,7 +49,10 @@ export async function startDiscordBot() {
 }
 
 async function registerSlashCommands() {
-  if (!CLIENT_ID) return;
+  if (!CLIENT_ID) {
+    console.warn('DISCORD_CLIENT_ID not provided. Slash commands will not be registered.');
+    return;
+  }
 
   const commands = [
     new SlashCommandBuilder()
@@ -60,12 +63,14 @@ async function registerSlashCommands() {
   const rest = new REST().setToken(DISCORD_TOKEN);
 
   try {
+    console.log(`Attempting to register slash commands for application ID: ${CLIENT_ID}`);
     await rest.put(Routes.applicationCommands(CLIENT_ID), {
       body: commands.map(command => command.toJSON()),
     });
-    console.log('Successfully registered Discord slash commands.');
+    console.log('✅ Successfully registered Discord slash commands.');
   } catch (error) {
-    console.error('Error registering Discord slash commands:', error);
+    console.error('❌ Error registering Discord slash commands:', error);
+    console.log('💡 Make sure DISCORD_CLIENT_ID matches your bot\'s Application ID from Discord Developer Portal');
   }
 }
 

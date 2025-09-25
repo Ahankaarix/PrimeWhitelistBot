@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Clock, CheckCircle, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, Clock, CheckCircle, XCircle, ExternalLink } from "lucide-react";
 import type { Application } from "@shared/schema";
+import { Link } from "wouter";
 
 export default function Dashboard() {
   const { data: applications = [], isLoading } = useQuery<Application[]>({
@@ -42,6 +44,22 @@ export default function Dashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto p-6">
+        {/* Navigation Links */}
+        <div className="mb-6 flex space-x-4">
+          <Link href="/applications">
+            <Button variant="outline" data-testid="link-applications">
+              <Users className="h-4 w-4 mr-2" />
+              View Applications
+            </Button>
+          </Link>
+          <Link href="/apply">
+            <Button data-testid="link-apply">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Submit Application
+            </Button>
+          </Link>
+        </div>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="discord-message border-l-4 border-l-blue-500">

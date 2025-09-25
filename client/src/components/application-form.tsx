@@ -11,7 +11,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { ArrowLeft } from "lucide-react";
 import type { InsertApplication } from "@shared/schema";
+import { Link } from "wouter";
 
 export default function ApplicationForm() {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -65,20 +67,32 @@ export default function ApplicationForm() {
 
   if (isSubmitted) {
     return (
-      <Card className="success-card max-w-2xl mx-auto">
-        <CardContent className="pt-6">
-          <div className="text-center space-y-4">
-            <div className="text-6xl">✅</div>
-            <h2 className="text-2xl font-bold text-green-600">Application Submitted!</h2>
-            <p className="text-muted-foreground">
-              Thank you for your application! Our admin team will review it and get back to you soon.
-            </p>
-            <Button onClick={() => setIsSubmitted(false)} data-testid="button-submit-another">
-              Submit Another Application
-            </Button>
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6">
+            <Link href="/">
+              <Button variant="outline" data-testid="link-back-dashboard">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Dashboard
+              </Button>
+            </Link>
           </div>
-        </CardContent>
-      </Card>
+          <Card className="success-card bg-card shadow-lg border border-border">
+            <CardContent className="pt-6">
+              <div className="text-center space-y-4">
+                <div className="text-6xl">✅</div>
+                <h2 className="text-2xl font-bold text-green-600">Application Submitted!</h2>
+                <p className="text-muted-foreground">
+                  Thank you for your application! Our admin team will review it and get back to you soon.
+                </p>
+                <Button onClick={() => setIsSubmitted(false)} data-testid="button-submit-another">
+                  Submit Another Application
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     );
   }
 
@@ -86,7 +100,17 @@ export default function ApplicationForm() {
   const rpWordsCount = form.watch("rpExperience").split(/\s+/).filter(word => word.length > 0).length;
 
   return (
-    <Card className="discord-message max-w-4xl mx-auto">
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <Link href="/">
+            <Button variant="outline" data-testid="link-back-dashboard">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </Link>
+        </div>
+        <Card className="bg-card shadow-lg border border-border">
       <CardHeader>
         <CardTitle className="text-2xl text-center">📝 Prime City Whitelist Application</CardTitle>
         <p className="text-center text-muted-foreground">
@@ -379,5 +403,7 @@ export default function ApplicationForm() {
         </Form>
       </CardContent>
     </Card>
+      </div>
+    </div>
   );
 }

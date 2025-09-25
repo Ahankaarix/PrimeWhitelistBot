@@ -1,8 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import ApplicationCard from "@/components/application-card";
 import type { Application } from "@shared/schema";
+import { Link } from "wouter";
 
 export default function Applications() {
   const { data: applications = [], isLoading } = useQuery<Application[]>({
@@ -30,14 +33,22 @@ export default function Applications() {
     <div className="min-h-screen discord-bg">
       {/* Header */}
       <div className="border-b border-border p-4">
-        <div className="max-w-7xl mx-auto flex items-center space-x-4">
-          <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold text-xl">
-            PC
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold text-xl">
+              PC
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Whitelist Applications</h1>
+              <p className="text-muted-foreground">Review and manage all applications</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Whitelist Applications</h1>
-            <p className="text-muted-foreground">Review and manage all applications</p>
-          </div>
+          <Link href="/">
+            <Button variant="outline" data-testid="link-dashboard">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </Link>
         </div>
       </div>
 
